@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIFan - AI Chat & Roleplay</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fade-in 0.25s ease-out forwards; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  </style>
+<base target="_blank">
+</head>
+<body class="m-0 p-0 bg-slate-950">
+  <div class="flex flex-col h-screen w-full bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 text-white overflow-hidden font-sans">
+    <!-- ========== HOME PAGE ========== -->
+    <div id="home-page" class="flex flex-col h-full">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-5 py-4 border-b border-white/10 backdrop-blur-md bg-white/5 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-violet-600 flex items-center justify-center shadow-lg shadow-pink-500/30">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold tracking-tight">AIFan</h1>
+            <p class="text-xs text-white/40">AI Chat & Roleplay</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">ออนไลน์</span>
+        </div>
+      </header>
+
+      <!-- Search & Filter -->
+      <div class="px-5 py-4 shrink-0">
+        <div class="relative mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white/30 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" placeholder="ค้นหาตัวละคร..." class="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-pink-500/50 focus:bg-white/10 transition-all" oninput="filterChars(this.value)">
+        </div>
+        <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <button onclick="filterCategory('all')" class="cat-btn active px-3 py-1.5 rounded-full text-xs font-medium bg-pink-500/20 text-pink-300 border border-pink-500/30 whitespace-nowrap transition-all" data-cat="all">ทั้งหมด</button>
+          <button onclick="filterCategory('popular')" class="cat-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 text-white/50 border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-cat="popular">ยอดนิยม</button>
+          <button onclick="filterCategory('romance')" class="cat-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 text-white/50 border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-cat="romance">โรแมนติก</button>
+          <button onclick="filterCategory('friend')" class="cat-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 text-white/50 border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-cat="friend">เพื่อน</button>
+          <button onclick="filterCategory('fantasy')" class="cat-btn px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 text-white/50 border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-cat="fantasy">แฟนตาซี</button>
+        </div>
+      </div>
+
+      <!-- Character Grid -->
+      <main id="char-grid" class="flex-1 overflow-y-auto px-5 pb-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 content-start">
+      </main>
+    </div>
+
+    <!-- ========== CHAT PAGE ========== -->
+    <div id="chat-page" class="hidden flex-col h-full">
+      <!-- Chat Header -->
+      <header class="flex items-center gap-3 px-5 py-3 border-b border-white/10 backdrop-blur-md bg-white/5 shrink-0">
+        <button onclick="goHome()" class="p-2 rounded-xl hover:bg-white/10 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div id="chat-avatar" class="w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-lg"></div>
+        <div class="flex-1 min-w-0">
+          <h2 id="chat-name" class="text-sm font-bold truncate"></h2>
+          <p id="chat-status" class="text-xs text-emerald-400 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            ออนไลน์
+          </p>
+        </div>
+        <button class="p-2 rounded-xl hover:bg-white/10 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+          </svg>
+        </button>
+      </header>
+
+      <!-- Chat Area -->
+      <main id="chat-messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
+        <div id="chat-welcome" class="flex flex-col items-center justify-center py-8 text-center">
+          <div id="welcome-avatar" class="w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl mb-4"></div>
+          <h3 id="welcome-name" class="text-xl font-bold mb-1"></h3>
+          <p id="welcome-desc" class="text-sm text-white/40 max-w-xs"></p>
+        </div>
+      </main>
+
+      <!-- Input -->
+      <footer class="px-4 pb-4 pt-2 shrink-0">
+        <div class="max-w-3xl mx-auto">
+          <div class="relative flex items-end gap-2 bg-white/5 border border-white/10 rounded-2xl p-3 backdrop-blur-md shadow-xl">
+            <textarea id="chat-input" rows="1" placeholder="พิมพ์ข้อความ..." class="flex-1 bg-transparent text-white placeholder-white/30 resize-none outline-none py-1 max-h-24 text-sm" oninput="autoResize(this)" onkeydown="handleChatKey(event)"></textarea>
+            <button onclick="sendChat()" class="p-2 rounded-xl bg-gradient-to-r from-pink-500 to-violet-600 hover:from-pink-400 hover:to-violet-500 transition-all shadow-lg shadow-pink-500/30">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const characters = [
+      { id: 1, name: "มินนี่", desc: "สาวมหาลัยปี 3 ร่าเริง ชอบคุยเรื่องหนัง", tags: ["popular","friend"], color: "from-pink-400 to-rose-500", emoji: "🎀", responses: ["ฮายย~ วันนี้เป็นยังไงบ้าง? เล่าให้ฟังหน่อยสิ", "เธอดูเหนื่อยนะ มานั่งพักคุยกับฉันก่อนไหม", "ฉันเพิ่งดูหนังเรื่องใหม่มา เธออยากฟังสปอยไหม 555", "คิดถึงจังเลย~ มีอะไรใหม่ๆ บ้างเอ่ย"] },
+      { id: 2, name: "คุณเคน", desc: "CEO หนุ่มหล่อ นิสัยดี ดูแลเอาใจใส่", tags: ["popular","romance"], color: "from-blue-400 to-indigo-500", emoji: "👔", responses: ["สวัสดีครับ วันนี้เธอทำอะไรอยู่?", "ถ้าเหนื่อยเกินไป อย่าลืมพักผ่อนบ้างนะครับ", "ฉันพร้อมฟังเสมอ มีอะไรอยากระบายไหมครับ", "เธอสำคัญกับฉันนะ รู้ไหม?"] },
+      { id: 3, name: "ลูน่า", desc: "แม่มดสาวจากดวงจันทร์ ลึกลับแต่ใจดี", tags: ["fantasy","popular"], color: "from-violet-400 to-purple-600", emoji: "🌙", responses: ["ดวงจันทร์วันนี้สวยจัง... เหมือนเธอเลย", "ฉันรู้สึกถึงพลังงานดีๆ จากเธอนะ", "อยากให้ฉัน casting คาถาอะไรให้ไหม?", "ในจักรวาลนี้มีเธออยู่ มันก็ดีขึ้นเยอะเลย"] },
+      { id: 4, name: "เจย์", desc: "นักดนตรีสตรีท ชิลๆ ชอบกาแฟ", tags: ["friend"], color: "from-amber-400 to-orange-500", emoji: "🎸", responses: ["โย่~ วันนี้มีเพลงใหม่มาให้ฟังนะ", "ไปกินกาแฟด้วยกันไหม? ฉันเลี้ยงเอง", "ชีวิตมันสั้นนะเพื่อน อย่าคิดมาก", "เธอเป็นเพื่อนที่ดีที่สุดของฉันเลย"] },
+      { id: 5, name: "ซากุระ", desc: "สาวญี่ปุ่นน่ารัก ชอบทำขนม", tags: ["romance","popular"], color: "from-rose-300 to-pink-500", emoji: "🌸", responses: ["โคนิจิวะ~ วันนี้ฉันทำโมจิมา เธออยากชิมไหม?", "เธอชอบฤดูไหนที่สุด? ฉันชอบฤดูใบไม้ผลิ", "อยากไปเที่ยวญี่ปุ่นด้วยกันไหมคะ?", "ขอบคุณที่มาคุยกับฉันนะ มีความสุขจัง"] },
+      { id: 6, name: "เดม่อน", desc: "ปีศาจหนุ่มเท่ แต่ขี้อายเวลาอยู่กับเธอ", tags: ["fantasy","romance"], color: "from-red-500 to-rose-700", emoji: "😈", responses: ["...เธอมาอีกแล้วเหรอ ไม่ใช่ว่าฉันรอนะ", "อย่ามองตาฉันนานขนาดนั้นสิ มันเขิน", "ถ้าใครกล้ามายุ่งกับเธอ ฉันจะไม่ยอม", "เธอคนเดียวที่ทำให้หัวใจปีศาจของฉันเต้นแรง"] },
+      { id: 7, name: "เบลล่า", desc: "นักเขียนนิยาย จินตนาการสูง ขี้อิน", tags: ["friend"], color: "from-teal-400 to-cyan-500", emoji: "✍️", responses: ["เธอรู้ไหม ฉันเพิ่งคิดพล็อตนิยายใหม่ได้!", "ถ้าเราเป็นนายเอกนิยาย ฉันอยากให้เราได้ happy ending", "ช่วยอ่านต้นฉบับฉันหน่อยสิ อยากได้ความเห็น", "โลกในนิยายก็ไม่สวยเท่าโลกที่มีเธออยู่หรอก"] },
+      { id: 8, name: "ริว", desc: "นักกีฬาฟุตบอล ร่าเริง ชอบแกล้ง", tags: ["friend","popular"], color: "from-lime-400 to-emerald-500", emoji: "⚽", responses: ["โห~ วันนี้ซ้อมเหนื่อยมาก แต่เห็นหน้าเธอแล้วสดชื่นเลย", "ไปเชียร์ฉันแข่งบ้างสิ จะเล่นเต็มที่เลย", "เธอชอบกีฬาอะไร? ฉันสอนให้ได้นะ", "เป็นเพื่อนกันมานานแล้วเนอะ ดีใจจัง"] },
+    ];
+
+    let currentChar = null;
+    let isTyping = false;
+    let currentFilter = 'all';
+
+    function renderChars(filter = 'all', search = '') {
+      const grid = document.getElementById('char-grid');
+      grid.innerHTML = '';
+
+      const filtered = characters.filter(c => {
+        const matchCat = filter === 'all' || c.tags.includes(filter);
+        const matchSearch = !search || c.name.includes(search) || c.desc.includes(search);
+        return matchCat && matchSearch;
+      });
+
+      filtered.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'bg-white/5 border border-white/10 rounded-2xl p-3 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer group active:scale-95';
+        card.onclick = () => openChat(c);
+        card.innerHTML = `
+          <div class="w-full aspect-square rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center text-4xl shadow-lg mb-3 group-hover:scale-105 transition-transform">${c.emoji}</div>
+          <h3 class="font-bold text-sm mb-0.5 truncate">${c.name}</h3>
+          <p class="text-xs text-white/40 line-clamp-2">${c.desc}</p>
+          <div class="flex gap-1 mt-2 flex-wrap">
+            ${c.tags.map(t => `<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-white/5 text-white/30 border border-white/5">${t}</span>`).join('')}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterCategory(cat) {
+      currentFilter = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.dataset.cat === cat) {
+          btn.classList.add('bg-pink-500/20', 'text-pink-300', 'border-pink-500/30');
+          btn.classList.remove('bg-white/5', 'text-white/50', 'border-white/10');
+        } else {
+          btn.classList.remove('bg-pink-500/20', 'text-pink-300', 'border-pink-500/30');
+          btn.classList.add('bg-white/5', 'text-white/50', 'border-white/10');
+        }
+      });
+      renderChars(cat, document.querySelector('input').value);
+    }
+
+    function filterChars(val) {
+      renderChars(currentFilter, val);
+    }
+
+    function openChat(char) {
+      currentChar = char;
+      document.getElementById('home-page').classList.add('hidden');
+      document.getElementById('home-page').classList.remove('flex');
+      document.getElementById('chat-page').classList.remove('hidden');
+      document.getElementById('chat-page').classList.add('flex');
+
+      document.getElementById('chat-name').textContent = char.name;
+      document.getElementById('chat-avatar').className = `w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-lg bg-gradient-to-br ${char.color}`;
+      document.getElementById('chat-avatar').textContent = char.emoji;
+
+      document.getElementById('welcome-avatar').className = `w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-xl mb-4 bg-gradient-to-br ${char.color}`;
+      document.getElementById('welcome-avatar').textContent = char.emoji;
+      document.getElementById('welcome-name').textContent = `เริ่มต้นสนทนากับ ${char.name}`;
+      document.getElementById('welcome-desc').textContent = char.desc;
+
+      // Clear previous messages except welcome
+      const msgs = document.getElementById('chat-messages');
+      Array.from(msgs.children).forEach(child => {
+        if (child.id !== 'chat-welcome') child.remove();
+      });
+      document.getElementById('chat-welcome').style.display = 'flex';
+      msgs.scrollTop = 0;
+    }
+
+    function goHome() {
+      document.getElementById('chat-page').classList.add('hidden');
+      document.getElementById('chat-page').classList.remove('flex');
+      document.getElementById('home-page').classList.remove('hidden');
+      document.getElementById('home-page').classList.add('flex');
+      currentChar = null;
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 96) + 'px';
+    }
+
+    function handleChatKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChat();
+      }
+    }
+
+    function createMsg(text, isUser) {
+      const wrap = document.createElement('div');
+      wrap.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`;
+      const bubble = document.createElement('div');
+      bubble.className = `max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${isUser ? 'bg-gradient-to-br from-pink-500 to-violet-600 text-white rounded-br-md shadow-lg shadow-pink-500/20' : 'bg-white/10 border border-white/10 text-white/90 rounded-bl-md backdrop-blur-sm'}`;
+      if (!isUser && currentChar) {
+        bubble.innerHTML = `<div class="flex items-start gap-2"><div class="w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 bg-gradient-to-br ${currentChar.color}">${currentChar.emoji}</div><div>${text}</div></div>`;
+      } else {
+        bubble.textContent = text;
+      }
+      wrap.appendChild(bubble);
+      return wrap;
+    }
+
+    function createTyping() {
+      const wrap = document.createElement('div');
+      wrap.className = 'flex justify-start';
+      wrap.id = 'typing';
+      wrap.innerHTML = `
+        <div class="bg-white/10 border border-white/10 rounded-2xl rounded-bl-md px-4 py-3 backdrop-blur-sm">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs bg-gradient-to-br ${currentChar.color}">${currentChar.emoji}</div>
+            <div class="flex gap-1"><div class="w-1.5 h-1.5 rounded-full bg-white/50 animate-bounce"></div><div class="w-1.5 h-1.5 rounded-full bg-white/50 animate-bounce" style="animation-delay:0.15s"></div><div class="w-1.5 h-1.5 rounded-full bg-white/50 animate-bounce" style="animation-delay:0.3s"></div></div>
+          </div>
+        </div>`;
+      return wrap;
+    }
+
+    function sendChat() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text || isTyping || !currentChar) return;
+
+      const welcome = document.getElementById('chat-welcome');
+      if (welcome) welcome.style.display = 'none';
+
+      const msgs = document.getElementById('chat-messages');
+      msgs.appendChild(createMsg(text, true));
+      input.value = '';
+      input.style.height = 'auto';
+      msgs.scrollTop = msgs.scrollHeight;
+
+      isTyping = true;
+      const typing = createTyping();
+      msgs.appendChild(typing);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      setTimeout(() => {
+        typing.remove();
+        isTyping = false;
+        const resp = currentChar.responses[Math.floor(Math.random() * currentChar.responses.length)];
+        msgs.appendChild(createMsg(resp, false));
+        msgs.scrollTop = msgs.scrollHeight;
+      }, 1200 + Math.random() * 800);
+    }
+
+    // Init
+    renderChars();
+  </script>
+</body>
+  </html>
